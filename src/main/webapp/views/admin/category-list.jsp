@@ -2,6 +2,11 @@
 	pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="jakarta.tags.core"%>
 
+<form action="${pageContext.request.contextPath}/admin/categories" method="get">
+    <input type="text" name="keyword" value="${keyword}" placeholder="Nhập từ khóa tìm kiếm">
+    <button type="submit">Tìm kiếm</button>
+</form>
+
 <a href="${pageContext.request.contextPath}/admin/category/add">Add category</a>
 <table border="1" width="100%">
 	<tr>

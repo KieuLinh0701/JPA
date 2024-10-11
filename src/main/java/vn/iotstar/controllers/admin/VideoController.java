@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 
+import com.microsoft.sqlserver.jdbc.StringUtils;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
@@ -36,7 +38,14 @@ public class VideoController extends HttpServlet {
 		resp.setCharacterEncoding("UTF-8");
 
 		if (url.contains("videos")) {
-			List<Video> list = videoService.findAll();
+			String keyword = req.getParameter("keyword");
+			List<Video> list;
+			if (!StringUtils.isEmpty(keyword)) {
+			    list = videoService.findByVideoTitle(keyword);
+			} else {
+				list = videoService.findAll();
+			}
+			req.setAttribute("keyword", keyword);
 			req.setAttribute("listvideo", list);
 			req.getRequestDispatcher("/views/admin/video-list.jsp").forward(req, resp);
 		} else if (url.contains("add")) {
