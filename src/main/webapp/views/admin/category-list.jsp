@@ -2,7 +2,7 @@
 	pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="jakarta.tags.core"%>
 
-<form action="${pageContext.request.contextPath}/admin/categories" method="get">
+<form action="${pageContext.request.contextPath}/admin/category/search" method="get">
     <input type="text" name="keyword" value="${keyword}" placeholder="Nhập từ khóa tìm kiếm">
     <button type="submit">Tìm kiếm</button>
 </form>

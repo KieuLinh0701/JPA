@@ -3,6 +3,9 @@ package vn.iotstar.controllers.admin;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.sql.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.microsoft.sqlserver.jdbc.StringUtils;
@@ -15,21 +18,26 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 import vn.iotstar.entity.Category;
+import vn.iotstar.entity.User;
 import vn.iotstar.entity.Video;
 import vn.iotstar.services.ICategoryService;
+import vn.iotstar.services.IRoleService;
+import vn.iotstar.services.IUserService;
 import vn.iotstar.services.IVideoService;
 import vn.iotstar.services.implement.CategoryService;
+import vn.iotstar.services.implement.RoleService;
+import vn.iotstar.services.implement.UserService;
 import vn.iotstar.services.implement.VideoService;
 
 import static vn.iotstar.utils.Constant.*;
 
 @MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = 1024 * 1024 * 5, maxRequestSize = 1024 * 1024 * 5 * 5)
-@WebServlet(urlPatterns = { "/admin/videos", "/admin/video/add", "/admin/video/insert", "/admin/video/edit",
-		"/admin/video/update", "/admin/video/delete", "/admin/video/search" })
-public class VideoController extends HttpServlet {
+@WebServlet(urlPatterns = { "/admin/users", "/admin/user/add", "/admin/user/insert", "/admin/user/edit",
+		"/admin/user/update", "/admin/user/delete", "/admin/user/search" })
+public class UserController extends HttpServlet {
 
 	private static final long serialVersionUID = 1L;
-	public IVideoService videoService = new VideoService();
+	public IUserService userService = new UserService();
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -37,31 +45,31 @@ public class VideoController extends HttpServlet {
 		req.setCharacterEncoding("UTF-8");
 		resp.setCharacterEncoding("UTF-8");
 
-		if (url.contains("videos")) {
-			List<Video> list = videoService.findAll();
-			req.setAttribute("listvideo", list);
-			req.getRequestDispatcher("/views/admin/video-list.jsp").forward(req, resp);
+		if (url.contains("users")) {
+			List<User> list = userService.findAll();
+			req.setAttribute("listuser", list);
+			req.getRequestDispatcher("/views/admin/user-list.jsp").forward(req, resp);
 		} else if (url.contains("search")) {
 			String keyword = req.getParameter("keyword");
-			List<Video> list = videoService.findByVideoTitle(keyword);
+			List<User> list = userService.findByUsername(keyword);
 			req.setAttribute("keyword", keyword);
-			req.setAttribute("listvideo", list);
-			req.getRequestDispatcher("/views/admin/video-list.jsp").forward(req, resp);
+			req.setAttribute("listuser", list);
+			req.getRequestDispatcher("/views/admin/user-list.jsp").forward(req, resp);
 		} else if (url.contains("add")) {
-			req.getRequestDispatcher("/views/admin/video-add.jsp").forward(req, resp);
+			req.getRequestDispatcher("/views/admin/user-add.jsp").forward(req, resp);
 		} else if (url.contains("edit")) {
 			int id = Integer.parseInt(req.getParameter("id"));
-			Video video = videoService.findById(id);
-			req.setAttribute("vid", video);
-			req.getRequestDispatcher("/views/admin/video-edit.jsp").forward(req, resp);
+			User user = userService.findById(id);
+			req.setAttribute("user", user);
+			req.getRequestDispatcher("/views/admin/user-edit.jsp").forward(req, resp);
 		} else if (url.contains("delete")) {
 			int id = Integer.parseInt(req.getParameter("id"));
 			try {
-				videoService.delete(id);
+				userService.delete(id);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			resp.sendRedirect(req.getContextPath() + "/admin/videos");
+			resp.sendRedirect(req.getContextPath() + "/admin/users");
 		}
 	}
 
@@ -71,18 +79,24 @@ public class VideoController extends HttpServlet {
 		req.setCharacterEncoding("UTF-8");
 		resp.setCharacterEncoding("UTF-8");
 
-		if (url.contains("admin/video/insert")) {
-			Video video = new Video();
-			ICategoryService cateService = new CategoryService();
-			String title = req.getParameter("title");
-			int active = Integer.parseInt(req.getParameter("active"));
-			String description = req.getParameter("description");
-			int categoryId = Integer.parseInt(req.getParameter("categoryId"));
-			video.setTitle(title);
-			video.setActive(active);
-			video.setDescription(description);
-			video.setViews(0);
-			video.setCategory(cateService.findById(categoryId));
+		if (url.contains("admin/user/insert")) {
+			User user = new User();
+			IRoleService roleService = new RoleService();
+
+			String username = req.getParameter("username");
+			String password = req.getParameter("password");
+			String fullname = req.getParameter("fullname");
+			String email = req.getParameter("email");
+			String phone = req.getParameter("phone");
+			int roleId = Integer.parseInt(req.getParameter("roleId"));
+
+			user.setUsername(username);
+			user.setPassword(password);
+			user.setFullname(fullname);
+			user.setEmail(email);
+			user.setPhone(phone);
+			user.setRole(roleService.findByRoleId(roleId));
+			user.setCreateDate(LocalDateTime.now());
 
 			String fname = "";
 			String uploadPath = UPLOAD_DIRECTORY;
@@ -91,7 +105,7 @@ public class VideoController extends HttpServlet {
 				uploadDir.mkdir();
 			}
 			try {
-				Part part = req.getPart("poster");
+				Part part = req.getPart("images");
 				if (part.getSize() > 0) {
 					String filename = Paths.get(part.getSubmittedFileName()).getFileName().toString();
 					// Đổi tên file
@@ -101,35 +115,39 @@ public class VideoController extends HttpServlet {
 					// upload File
 					part.write(uploadPath + File.separator + fname);
 					// Ghi tên file vào data
-					video.setPoster(fname);
+					user.setImages(fname);
 				} else {
-					video.setPoster("1234.png");
+					user.setImages("1234.png");
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			videoService.insert(video);
-			resp.sendRedirect(req.getContextPath() + "/admin/videos");
-		} else if (url.contains("/admin/video/update")) {
-			Video video = new Video();
-			String title = req.getParameter("title");
-			int active = Integer.parseInt(req.getParameter("active"));
-			String description = req.getParameter("description");
-			int categoryId = Integer.parseInt(req.getParameter("categoryId"));
-			int videoId = Integer.parseInt(req.getParameter("videoId"));
-			video.setVideoId(videoId);
-			video.setTitle(title);
-			ICategoryService cateService = new CategoryService();
+			userService.insert(user);
+			resp.sendRedirect(req.getContextPath() + "/admin/users");
+		} else if (url.contains("/admin/user/update")) {
+			User user = new User();
+			IRoleService roleService = new RoleService();
 
-			video.setCategory(cateService.findById(categoryId));
+			String username = req.getParameter("username");
+			String password = req.getParameter("password");
+			String fullname = req.getParameter("fullname");
+			String email = req.getParameter("email");
+			String phone = req.getParameter("phone");
+			int roleId = Integer.parseInt(req.getParameter("roleId"));
+			int userId = Integer.parseInt(req.getParameter("userId"));
 
-			video.setActive(active);
-			video.setDescription(description);
+			user.setUsername(username);
+			user.setPassword(password);
+			user.setFullname(fullname);
+			user.setEmail(email);
+			user.setPhone(phone);
+			user.setRole(roleService.findByRoleId(roleId));
+			user.setUserId(userId);
 
 			// Lưu hình ảnh cũ
-			Video oldVideo = videoService.findById(videoId);
-			String fileOld = oldVideo.getPoster();
-			video.setViews(oldVideo.getViews());
+			User oldUser = userService.findById(userId);
+			String fileOld = oldUser.getImages();
+			user.setCreateDate(oldUser.getCreateDate());
 
 			// Xử lý images
 			String fname = "";
@@ -139,7 +157,7 @@ public class VideoController extends HttpServlet {
 				uploadDir.mkdir();
 			}
 			try {
-				Part part = req.getPart("poster");
+				Part part = req.getPart("images");
 				if (part.getSize() > 0) {
 					String filename = Paths.get(part.getSubmittedFileName()).getFileName().toString();
 					// Đổi tên file
@@ -149,16 +167,16 @@ public class VideoController extends HttpServlet {
 					// upload File
 					part.write(uploadPath + File.separator + fname);
 					// Ghi tên file vào data
-					video.setPoster(fname);
+					user.setImages(fname);
 				} else {
-					video.setPoster(fileOld);
+					user.setImages(fileOld);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 
-			videoService.update(video);
-			resp.sendRedirect(req.getContextPath() + "/admin/videos");
+			userService.update(user);
+			resp.sendRedirect(req.getContextPath() + "/admin/users");
 		}
 	}
 }

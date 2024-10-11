@@ -35,17 +35,16 @@ public class CategoryController extends HttpServlet {
 		resp.setCharacterEncoding("UTF-8");
 
 		if (url.contains("categories")) {
+			List<Category> list = cateService.findAll();
+			req.setAttribute("listcate", list);
+			req.getRequestDispatcher("/views/admin/category-list.jsp").forward(req, resp);
+		} else if (url.contains("search")){ 
 			String keyword = req.getParameter("keyword");
-			List<Category> list;
-			if (!StringUtils.isEmpty(keyword)) {
-			    list = cateService.findByCategoryName(keyword);
-			} else {
-				list = cateService.findAll();
-			}
+			List<Category> list = cateService.findByCategoryName(keyword);
 			req.setAttribute("keyword", keyword);
 			req.setAttribute("listcate", list);
 			req.getRequestDispatcher("/views/admin/category-list.jsp").forward(req, resp);
-		} else if (url.contains("add")) {
+		}else if (url.contains("add")) {
 			req.getRequestDispatcher("/views/admin/category-add.jsp").forward(req, resp);
 		} else if (url.contains("edit")) {
 			int id = Integer.parseInt(req.getParameter("id"));

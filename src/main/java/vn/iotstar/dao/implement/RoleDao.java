@@ -7,66 +7,65 @@ import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 import vn.iotstar.config.JPAConfig;
-import vn.iotstar.dao.IVideoDao;
-import vn.iotstar.entity.Category;
-import vn.iotstar.entity.Video;
+import vn.iotstar.dao.IRoleDao;
+import vn.iotstar.entity.Role;
 
-public class VideoDao implements IVideoDao{
+public class RoleDao implements IRoleDao{
 
 	@Override
 	public int count() {
 		EntityManager enma = JPAConfig.getEntityManager();
-		String jpql = "SELECT count(c) FROM Video c";
+		String jpql = "SELECT count(c) FROM Role c";
 		Query query = enma.createQuery(jpql);
 		return ((Long)query.getSingleResult()).intValue();
 	}
 
 	@Override
-	public List<Video> findAll(int page, int pagesize) {
+	public List<Role> findAll(int page, int pagesize) {
 		EntityManager enma = JPAConfig.getEntityManager();
-		TypedQuery<Video> query = enma.createNamedQuery("Video.findAll", Video.class);
+		TypedQuery<Role> query = enma.createNamedQuery("Role.findAll", Role.class);
 		query.setFirstResult(page*pagesize);
 		query.setMaxResults(pagesize);
 		return query.getResultList();
 	}
 
 	@Override
-	public List<Video> findByVideoTitle(String tit) {
+	public List<Role> findByRoleName(String rolename) {
 		EntityManager enma = JPAConfig.getEntityManager();
-		String jpql = "SELECT c FROM Video c WHERE c.title like : tit";
-		TypedQuery<Video> query = enma.createQuery(jpql, Video.class);
-		query.setParameter("tit", "%" + tit + "%");
+		String jpql = "SELECT c FROM Role c WHERE c.roleName like : rolename";
+		TypedQuery<Role> query = enma.createQuery(jpql, Role.class);
+		query.setParameter("rolename", "%" + rolename + "%");
 		return query.getResultList();
 	}
 
 	@Override
-	public List<Video> findAll() {
+	public List<Role> findAll() {
 		EntityManager enma = JPAConfig.getEntityManager();
-		TypedQuery<Video> query = enma.createNamedQuery("Video.findAll", Video.class);
+		TypedQuery<Role> query = enma.createNamedQuery("Role.findAll", Role.class);
 		return query.getResultList();
 	}
 
 	@Override
-	public Video findById(int videoId) {
+	public Role findByRoleId(int roleId) {
 		EntityManager enma = JPAConfig.getEntityManager();
-		Video video = enma.find(Video.class, videoId);
-		return video;
+		Role role = enma.find(Role.class, roleId);
+		return role;
 	}
 
 	@Override
-	public void delete(int videoId) throws Exception {
+	public void delete(int roleId) throws Exception {
 		EntityManager enma = JPAConfig.getEntityManager();
 		EntityTransaction trans = enma.getTransaction();
 		try {
 			trans.begin();
-			Video video = enma.find(Video.class, videoId);
-			if (video != null) {
-				enma.remove(video);
+			Role role = enma.find(Role.class, roleId);
+			if (role != null) {
+				enma.remove(role);
 			}
 			else {
 				throw new Exception("Không tìm thấy");
 			}
-			enma.remove(video);
+			enma.remove(role);
 			trans.commit();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -78,12 +77,12 @@ public class VideoDao implements IVideoDao{
 	}
 
 	@Override
-	public void update(Video video) {
+	public void update(Role role) {
 		EntityManager enma = JPAConfig.getEntityManager();
 		EntityTransaction trans = enma.getTransaction();
 		try {
 			trans.begin();
-			enma.merge(video);
+			enma.merge(role);
 			trans.commit();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -95,12 +94,12 @@ public class VideoDao implements IVideoDao{
 	}
 
 	@Override
-	public void insert(Video video) {
+	public void insert(Role role) {
 		EntityManager enma = JPAConfig.getEntityManager();
 		EntityTransaction trans = enma.getTransaction();
 		try {
 			trans.begin();
-			enma.persist(video);
+			enma.persist(role);
 			trans.commit();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -110,5 +109,5 @@ public class VideoDao implements IVideoDao{
 			enma.close();
 		}
 	}
-	
+
 }
